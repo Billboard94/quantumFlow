@@ -1,3 +1,5 @@
+# Input Layer: In this case, the input layer would accept the initial conditions, boundary conditions, and material properties of the electronic nanodevice as input features. These features could be represented as tensors or arrays containing numerical values.
+
 import numpy as np
 
 # Example input features
