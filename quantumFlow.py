@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pd.read_csv('')            # Read the training data set
+df = pd.read_csv('trainingdata_probe.csv')            # Read the training data set
 rho = df['rho']                 # Get the carrier distribution from training data
 input = df.drop('rho', axis=1)  # Get the input variables that describe the physical device
 
