@@ -5,9 +5,25 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 import numpy as np
+import re
+
+def process_string_to_dict(data):
+    """Convert a given string containing multiple complex numbers into a list."""
+
+    def parse_complex_number(value):
+        """Parse a complex number from its string representation."""
+        match = re.findall(r"(-?\d*\.\d+|\d+)[eE][+-]?\d+j?", value)
+        return [complex(x[:-1], x[-1].replace("j", "") if "j" in x else "0") for x in match]
+
+    return parse_complex_number(data)
+    
+rho = {}
 
 df = pd.read_csv('trainingdata_probe.csv')            # Read the training data set
-rho = df['rho']                 # Get the carrier distribution from training data
+rho_str = df["rho"].apply(process_string_to_dict)
+rho = {k: v[-1] for k, rho_dict in rho_str.items() for k, v in rho_dict.items()}
+print(rho)
+print(len(rho))
 input = df.drop('rho', axis=1)  # Get the input variables that describe the physical device
 
 ## Split the data into training data and test data
