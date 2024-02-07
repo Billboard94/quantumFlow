@@ -7,9 +7,11 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Dropout
 from tensorflow.keras.optimizers import Adam
+from tensorflow.data import Dataset
+from tensorflow.data import ExperimentalOps as TFExperimental
 
 # Load the CSV file
-df = pd.read_csv('yourfile.csv')
+df = pd.read_csv('trainingdata_probe.csv')
 
 # Define helper functions
 def process_string_to_dict(data):
@@ -41,27 +43,28 @@ def process_string_to_dict(data):
     return {'input': input_matrix, 'output': output_vector}
 
 # Custom data generator class
-class DataGenerator():
+class DataGenerator(TFExperimental.DataSource):
     def __init__(self, dataframe, batch_size=32):
+        super().__init__(cardinality=tf.data.experimental.Cardinality.UNBOUNDED, output_types=(tf.float32, tf.float32))
         self.df = dataframe
         self.batch_size = batch_size
         self.indexes = np.arange(len(self.df))
 
-    def __iter__(self):
-        random.shuffle(self.indexes)
-        for start_idx in range(0, len(self.df), self.batch_size):
-            stop_idx = min(start_idx + self.batch_size, len(self.df))
-            yield self.__getitem__(slice(start_idx, stop_idx))
+    def _generate_elements(self):
+        for inputs, outputs in zip(self._map_func(), repeat(None)):
+            yield inputs, outputs
 
-    def __getitem__(self, slice_obj):
-        X = [json.loads(self.df.loc[indices]['state']) for indices in slice_obj]
-        y = [json.loads(self.df.loc[indices]['rho']) for indices in slice_obj]
+    def _map_func(self):
+        def map_func(row):
+            X = json.loads(row["state"])
+            Y = json.loads(row["rho"])
+            processed_X = [process_string_to_dict(x["input"]) for x in X]
+            processed_Y = [process_string_to_dict(y_str)["output"] for y_str in Y]
 
-        processed_X = [process_string_to_dict(x['input']) for x in X]
-        processed_y = [process_string_to_dict(y_str)['output'] for y_str in y]
+            return np.stack(processed_X), np.stack(processed_Y)
 
-        return np.stack(processed_X), np.stack(processed_y)
-
+        return map_func
+    
 # Prepare the data generator
 data_gen = DataGenerator(df, batch_size=32)
 
@@ -75,4 +78,4 @@ optimizer = Adam(lr=0.001)
 model.compile(loss='mse', optimizer=optimizer)
 
 # Train the model
-history = model.fit(generator=data_gen, epochs=100, verbose=1)
+history = model.fit(dataset=data_gen.take(100*tf.data.experimental.AUTOTUNE), epochs=100, verbose=1)
