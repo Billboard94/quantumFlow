@@ -1,30 +1,55 @@
 import pandas as pd
+import re
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 import numpy as np
-import re
 
-def process_string_to_dict(data):
-    """Convert a given string containing multiple complex numbers into a list."""
+def convert_to_float(value):
+    """Attempts to convert given value to float."""
+    try:
+        result = float(value)
+    except ValueError:
+        result = None
+    return result
 
-    def parse_complex_number(value):
-        """Parse a complex number from its string representation."""
-        match = re.findall(r"(-?\d*\.\d+|\d+)[eE][+-]?\d+j?", value)
-        return [complex(x[:-1], x[-1].replace("j", "") if "j" in x else "0") for x in match]
+def convert_to_complex(value):
+    """Attempts to convert given value to a complex number."""
+    regex = re.compile(r"(\d+(?:\.\d*)?|.\d+)(e[-+]\d+)?")
+    match = regex.findall(value)
 
-    return parse_complex_number(data)
-    
-rho = {}
+    def _parse_real_imaginary(pair):
+        real, imag = pair
+        return complex(real) if imag is None else complex(*map(float, (real, imag)))
+
+    if len(match) == 1:
+        return _parse_real_imaginary(match[0])
+    elif len(match) == 2:
+        return _parse_real_imaginary(match)
+    else:
+        return None
+
+# Set up empty lists to store input and output data
+input = []
+rho = []
 
 df = pd.read_csv('trainingdata_probe.csv')            # Read the training data set
-rho_str = df["rho"].apply(process_string_to_dict)
-rho = {k: v[-1] for k, rho_dict in rho_str.items() for k, v in rho_dict.items()}
-print(rho)
-print(len(rho))
-input = df.drop('rho', axis=1)  # Get the input variables that describe the physical device
+
+# Iterate through each row in the DataFrame
+for index, row in df.iterrows():
+    # Split the row into two parts: input and output
+    inputs = [convert_to_float(val) for val in list(row[:6])]  # Unchanged
+    outputs = [convert_to_complex(val) for val in list(row[6:])]  # Applied conversion here
+
+    # Append the processed input and output data to their corresponding lists
+    input.extend([x for x in inputs if x is not None])
+    rho.extend([out for out in outputs if out is not None])
+
+# Convert the lsits to NumPy arrays for easier manipulation later
+input = np.array(input).reshape(-1, 6)
+rho = np.array(rho)
 
 ## Split the data into training data and test data
 input_train, input_test, rho_train, rho_test = train_test_split(input, rho, train_size=0.2, random_state=100)
