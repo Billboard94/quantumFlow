@@ -7,11 +7,11 @@ from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pd.read_csv('trainingdata_small.csv', header=0)            # Read the training data set
-# print(df.to_string())
-rho = df.iloc[:, 5][-16:].tolist()
-input = df.drop('rho', axis=1)
-print(rho)
+df = pd.read_csv('trainingdata_small.csv')            # Read the training data set
+# print(df)
+# rho = df.iloc[:,-10:].to_numpy()
+input = df.iloc[:,:3].to_numpy()
+print(input)
 # print(input)
 
 ## Split the data into training data and test data
