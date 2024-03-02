@@ -10,7 +10,7 @@ import numpy as np
 def replace_i_with_j(matlab_complex):
     return complex(str(matlab_complex).replace('i', 'j'))
 
-df = pd.read_csv('trainingdata_small.csv', sep=",", decimal=".")            # Read the training data set
+df = pd.read_csv('trainingdata_probe.csv', sep=",", decimal=".")            # Read the training data set
 rho_index = df.columns.get_loc('rho')
 rho = df.iloc[:, rho_index :]
 rho = np.vectorize(replace_i_with_j)(rho)
@@ -20,7 +20,7 @@ imag_rho = [num.imag for num in rho]
 rho = np.column_stack((real_rho,imag_rho))
 
 ## Split the data into training data and test data
-input_train, input_test, rho_train, rho_test = train_test_split(input, rho, train_size=0.2, random_state=100)
+input_train, input_test, rho_train, rho_test = train_test_split(input, rho, train_size=0.8, random_state=100)
 
 ## Build the Model
  # Linear Regression
@@ -65,7 +65,12 @@ df_models = pd.concat([lr_results, rf_results], axis=0).reset_index(drop=True)
 ## Plot evaluation results
 plt.scatter(x=rho_train, y=rho_lr_train_pred, c="#7CAE00",alpha=0.3)
 
-z = np.polyfit(rho_train, rho_lr_train_pred, 1)
+# Flatten the multidimensional arrays to 1D vectors
+rho_train_flat = np.ravel(rho_train)
+rho_lr_train_pred_flat = np.ravel(rho_lr_train_pred)
+
+# Perform polynomial fitting on the flattened vectors
+z = np.polyfit(rho_train_flat, rho_lr_train_pred_flat, 1)
 p = np.poly1d(z)
 
 plt.plot(rho_train, p(rho_train), "#F8766D")
