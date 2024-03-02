@@ -72,7 +72,7 @@ rho_lr_train_pred_flat = np.ravel(rho_lr_train_pred)
 # Perform polynomial fitting on the flattened vectors
 z = np.polyfit(rho_train_flat, rho_lr_train_pred_flat, 1)
 p = np.poly1d(z)
-
+print(p)
 # Plot using the flattened arrays
 plt.scatter(x=rho_train_flat, y=rho_lr_train_pred_flat, c="#7CAE00", alpha=0.3)
 plt.plot(rho_train_flat, p(rho_train_flat), "#F8766D")
