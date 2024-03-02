@@ -10,11 +10,14 @@ import numpy as np
 def replace_i_with_j(matlab_complex):
     return complex(str(matlab_complex).replace('i', 'j'))
 
-df = pd.read_csv('trainingdata_probe.csv', sep=",", decimal=".")            # Read the training data set
+df = pd.read_csv('trainingdata_small.csv', sep=",", decimal=".")            # Read the training data set
 rho_index = df.columns.get_loc('rho')
 rho = df.iloc[:, rho_index :]
 rho = np.vectorize(replace_i_with_j)(rho)
 input = df.iloc[:, : rho_index]
+real_rho = [num.real for num in rho]
+imag_rho = [num.imag for num in rho]
+rho = np.column_stack((real_rho,imag_rho))
 
 ## Split the data into training data and test data
 input_train, input_test, rho_train, rho_test = train_test_split(input, rho, train_size=0.2, random_state=100)
